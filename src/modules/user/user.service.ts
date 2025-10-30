@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { Prisma, User } from 'generated/prisma';
 import { PrismaService } from 'src/prisma.service';
+import { handleError } from 'src/utils/handle-create-error';
 
 @Injectable()
 export class UserService {
@@ -11,8 +12,6 @@ export class UserService {
   ) {}
 
   async get() {
-    this.client.emit('email', 'i sas');
-    this.client.emit('kuy', { name: 'kuy', lll: 'hee' });
     return this.prisma.user.findMany();
   }
 
@@ -25,6 +24,15 @@ export class UserService {
   }
 
   async create(data: Prisma.UserCreateInput) {
-    return this.prisma.user.create({ data });
+    try {
+      const user = await this.prisma.user.create({ data });
+      this.client.emit('send-email-wellcome', {
+        name: user.name,
+        email: user.email,
+      });
+      return user;
+    } catch (error) {
+      handleError(error);
+    }
   }
 }

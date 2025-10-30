@@ -7,9 +7,8 @@ import {
 } from '@nestjs/graphql';
 import { User } from '../entities/user.entity';
 import { UserService } from '../user.service';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { CreateUserInput } from '../dto/create-user-input';
-import { Prisma } from 'generated/prisma';
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -35,20 +34,10 @@ export class UsersResolver {
   async createUser(
     @Args('createUserInput') createUserInput: CreateUserInput,
   ): Promise<User> {
-    try {
-      return await this.userService.create({
-        name: createUserInput.name,
-        email: createUserInput.email,
-      });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2002') {
-          const fields = error.meta.target as string[];
-          const fieldNames = fields.join(', ');
-          throw new BadRequestException(`${fieldNames} is already exist`);
-        }
-      }
-    }
+    return await this.userService.create({
+      name: createUserInput.name,
+      email: createUserInput.email,
+    });
   }
 
   @ResolveReference()
